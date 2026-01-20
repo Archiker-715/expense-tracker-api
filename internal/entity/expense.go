@@ -11,8 +11,14 @@ type Expense struct {
 }
 
 type ExpenseCreate struct {
-	ID       uint   `swaggerignore:"true"`
+	// ID       uint   `swaggerignore:"true"`
 	Date     string `json:"expenseDate,omitempty"`
 	Amount   int    `json:"expenseAmount"`
 	Category string `json:"expenseCategory" validate:"required,oneof=Groceries Leisure Electronics Utilities Clothing Health Others"`
+}
+
+type ExpenseUpdate struct {
+	Date     *string `json:"expenseDate,omitempty"`
+	Amount   *int    `json:"expenseAmount,omitempty"`
+	Category *string `json:"expenseCategory,omitempty" validate:"required,oneof=Groceries Leisure Electronics Utilities Clothing Health Others"`
 }

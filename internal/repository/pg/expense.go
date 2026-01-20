@@ -2,6 +2,7 @@ package pg
 
 import (
 	"github.com/Archiker-715/expense-tracker-api/internal/entity"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -13,8 +14,8 @@ func NewExpenseRepository(db *gorm.DB) *ExpenseRepository {
 	return &ExpenseRepository{DB: db}
 }
 
-func (e *ExpenseRepository) GetExpenses() (expenses []entity.Expense, err error) {
-	if err = e.DB.Find(&expenses).Error; err != nil {
+func (e *ExpenseRepository) GetExpenses(userId uuid.UUID) (expenses []entity.Expense, err error) {
+	if err = e.DB.Where("InsertedBy = ?", userId).Find(&expenses).Error; err != nil {
 		return
 	}
 	return
@@ -32,4 +33,18 @@ func (e *ExpenseRepository) CreateExpense(expense *entity.Expense) (entity.ID, e
 		return entity.ID{}, err
 	}
 	return entity.ID{ID: int(expense.ID)}, nil
+}
+
+func (e *ExpenseRepository) UpdateExpense(expense *entity.Expense) error {
+	if err := e.DB.Save(expense).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *ExpenseRepository) DeleteExpense(id uint) error {
+	if err := e.DB.Delete(entity.Expense{ID: id}).Error; err != nil {
+		return err
+	}
+	return nil
 }
