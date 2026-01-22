@@ -20,7 +20,7 @@ func JsonEncode(w http.ResponseWriter, dest interface{}, internalCode int) error
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(dest); err != nil {
-		errs.WriteError(w, 0, http.StatusInternalServerError, fmt.Sprintf("build json err: %v", err))
+		errs.WriteError(w, internalCode, http.StatusInternalServerError, fmt.Sprintf("build json err: %v", err))
 		return err
 	}
 	return nil

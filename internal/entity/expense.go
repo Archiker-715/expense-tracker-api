@@ -1,6 +1,10 @@
 package entity
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Expense struct {
 	ID         uint      `json:"expenseId" gorm:"primaryKey;autoIncrement"`
@@ -8,6 +12,7 @@ type Expense struct {
 	Amount     int       `json:"expenseAmount" validate:"required" gorm:"check:price >=0"`
 	Category   string    `json:"expenseCategory" validate:"required,oneof=Groceries Leisure Electronics Utilities Clothing Health Others"`
 	InsertedBy uuid.UUID `json:"inserted_by"`
+	Inserted   time.Time `json:"inserted"`
 }
 
 type ExpenseCreate struct {
@@ -21,4 +26,10 @@ type ExpenseUpdate struct {
 	Date     *string `json:"expenseDate,omitempty"`
 	Amount   *int    `json:"expenseAmount,omitempty"`
 	Category *string `json:"expenseCategory,omitempty" validate:"required,oneof=Groceries Leisure Electronics Utilities Clothing Health Others"`
+}
+
+type DateFilter struct {
+	PastDate  string
+	StartDate time.Time
+	EndDate   time.Time
 }
