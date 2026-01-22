@@ -124,21 +124,3 @@ func (e *ExpenseService) DeleteExpense(ctx context.Context, expenseId int) error
 	}
 	return e.repo.DeleteExpense(userId, uint(expenseId))
 }
-
-// func (e *ExpenseService) checkExpOwner(ctx context.Context, expenseId int) (userId uuid.UUID, exp entity.Expense, err error) {
-// 	userId, ok := auth.UserFromContext(ctx)
-// 	if !ok {
-// 		return uuid.Nil, entity.Expense{}, errors.New("empty userId in ctx")
-// 	}
-
-// 	expFromDB, err := e.repo.GetExpenseById(uint(expenseId))
-// 	if err != nil {
-// 		return uuid.Nil, entity.Expense{}, err
-// 	}
-
-// 	if expFromDB.InsertedBy != userId {
-// 		return uuid.Nil, entity.Expense{}, errors.New("not enough rights for action")
-// 	}
-
-// 	return userId, expFromDB, nil
-// }
