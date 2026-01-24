@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/Archiker-715/expense-tracker-api/internal/auth"
@@ -18,6 +20,8 @@ type ExpenseService struct {
 func NewExpenseService(repo *pg.ExpenseRepository) *ExpenseService {
 	return &ExpenseService{repo: repo}
 }
+
+var availableCategories entity.AvailableExpCategories
 
 var ParseTimeError error = fmt.Errorf("Parsing date error. Enter date as %v", time.DateOnly)
 
@@ -40,11 +44,11 @@ func (e *ExpenseService) GetExpenses(ctx context.Context, expenseId int, dateFil
 		date = time.Now()
 		switch dateFilter.PastDate {
 		case "week":
-			date = date.Add(-7)
+			date = date.AddDate(0, 0, -7)
 		case "month":
-			date = date.Add(-30)
-		case "3 month":
-			date = date.Add(-90)
+			date = date.AddDate(0, 0, -30)
+		case "3 months":
+			date = date.AddDate(0, 0, -90)
 		}
 		return e.repo.GetExpensesByPastDate(userId, uint(expenseId), date)
 	} else {
@@ -56,14 +60,16 @@ func (e *ExpenseService) GetExpenses(ctx context.Context, expenseId int, dateFil
 			return []entity.Expense{}, errors.New("validation failed: endDate cannot be empty")
 		}
 	}
-
-	if expenseId >= 0 {
+	if expenseId <= 0 {
 		return e.repo.GetExpenses(userId)
 	} else {
 		exps := make([]entity.Expense, 0, 1)
 		exp, err := e.repo.GetExpenseById(userId, uint(expenseId))
 		if err != nil {
 			return []entity.Expense{}, err
+		}
+		if exp.ID == 0 {
+			return []entity.Expense{}, errors.New("expense not found")
 		}
 		exps = append(exps, exp)
 		return exps, nil
@@ -75,6 +81,11 @@ func (e *ExpenseService) CreateExpense(ctx context.Context, newExpense entity.Ex
 		return entity.ID{}, ParseTimeError
 	}
 
+	nexExpCat, ok := categoryAvailable(newExpense.Category)
+	if !ok {
+		return entity.ID{}, notAvailableCategoryError()
+	}
+
 	userId, ok := auth.UserFromContext(ctx)
 	if !ok {
 		return entity.ID{}, errors.New("empty userId in ctx")
@@ -83,8 +94,9 @@ func (e *ExpenseService) CreateExpense(ctx context.Context, newExpense entity.Ex
 	expense := entity.Expense{
 		Date:       newExpense.Date,
 		Amount:     newExpense.Amount,
-		Category:   newExpense.Category,
+		Category:   nexExpCat,
 		InsertedBy: userId,
+		Inserted:   time.Now(),
 	}
 
 	return e.repo.CreateExpense(&expense)
@@ -111,7 +123,11 @@ func (e *ExpenseService) UpdateExpense(ctx context.Context, expense entity.Expen
 		exp.Amount = *expense.Amount
 	}
 	if expense.Category != nil {
-		exp.Category = *expense.Category
+		nexExpCat, ok := categoryAvailable((*expense.Category))
+		if !ok {
+			return notAvailableCategoryError()
+		}
+		exp.Category = nexExpCat
 	}
 
 	return e.repo.UpdateExpense(userId, &exp)
@@ -123,4 +139,19 @@ func (e *ExpenseService) DeleteExpense(ctx context.Context, expenseId int) error
 		return errors.New("empty userId in ctx")
 	}
 	return e.repo.DeleteExpense(userId, uint(expenseId))
+}
+
+func categoryAvailable(category string) (newExpCat string, available bool) {
+	availableCategories.SetAvailableExpCategories()
+	newExpCat = strings.ToLower(category)
+	available = true
+	if !slices.Contains(availableCategories.AvailableCategories, newExpCat) {
+		return "", false
+	}
+	newExpCat = strings.ToUpper(newExpCat[:1]) + strings.ToLower(newExpCat[1:])
+	return
+}
+
+func notAvailableCategoryError() error {
+	return fmt.Errorf("Validation category failed. Available is %v", availableCategories.AvailableCategories)
 }

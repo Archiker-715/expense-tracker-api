@@ -14,14 +14,15 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository {
 	return &AuthRepository{DB: db}
 }
 
-func (a *AuthRepository) GetUserByLogPass(user entity.DBUser) (userId uuid.UUID, err error) {
-	if err := a.DB.Find(&userId, user.Login, user.Password).Error; err != nil {
+func (a *AuthRepository) GetUserByLogPass(user entity.DBUser) (uuid.UUID, error) {
+	var dbUser entity.Users
+	if err := a.DB.Where("login = ? AND password = ?", user.Login, user.Password).First(&dbUser).Error; err != nil {
 		return uuid.Nil, err
 	}
-	return
+	return dbUser.UserId, nil
 }
 
-func (a *AuthRepository) CreateUser(user *entity.User) error {
+func (a *AuthRepository) CreateUser(user *entity.Users) error {
 	if err := a.DB.Create(user).Error; err != nil {
 		return err
 	}

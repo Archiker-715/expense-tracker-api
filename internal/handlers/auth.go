@@ -22,12 +22,14 @@ func NewAuthHadler(repo *pg.AuthRepository) *AuthHandler {
 func (a *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 	var user entity.UserAuthRegistration
 	if err := httpserver.JsonDecode(w, r, &user, 0); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
 	accessData, err := a.auth.Authorization(user)
 	if err != nil {
 		errs.WriteError(w, 0, http.StatusInternalServerError, fmt.Sprintf("Authorization error: %v", err))
+		return
 	}
 
 	if err := httpserver.JsonEncode(w, accessData, 0); err != nil {
@@ -38,12 +40,14 @@ func (a *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 func (a *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	var user entity.UserAuthRegistration
 	if err := httpserver.JsonDecode(w, r, &user, 0); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
 	err := a.auth.Registration(user)
 	if err != nil {
 		errs.WriteError(w, 0, http.StatusInternalServerError, fmt.Sprintf("Registration error: %v", err))
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")

@@ -29,6 +29,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		userId := getUUIDfromToken(token)
 		if userId == uuid.Nil {
 			errs.WriteError(w, 0, http.StatusUnauthorized, "couldn't extract uuid from token")
+			return
 		}
 		ctx = auth.UserToContext(r.Context(), userId)
 
@@ -42,7 +43,7 @@ func getUUIDfromToken(token *jwt.Token) uuid.UUID {
 		return uuid.Nil
 	}
 
-	subClaim, ok := claims["sub"].(string)
+	subClaim, ok := claims["user_id"].(string)
 	if !ok {
 		return uuid.Nil
 	}

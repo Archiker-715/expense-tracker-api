@@ -71,11 +71,13 @@ func (e *ExpenseHandler) GetExpenses(w http.ResponseWriter, r *http.Request) {
 		StartDate: parsedStartDate,
 		EndDate:   parsedEndDate,
 	}
+
 	expenses, err := e.expense.GetExpenses(ctx, expenseId, dateFilter)
 	if err != nil {
-		errs.WriteError(w, 0, http.StatusInternalServerError, fmt.Sprintf("http error: %v", err))
+		errs.WriteError(w, 0, http.StatusInternalServerError, fmt.Sprintf("request error: %v", err))
 		return
 	}
+
 	if err := httpserver.JsonEncode(w, expenses, 0); err != nil {
 		return
 	}
@@ -84,6 +86,7 @@ func (e *ExpenseHandler) GetExpenses(w http.ResponseWriter, r *http.Request) {
 func (e *ExpenseHandler) CreateExpense(w http.ResponseWriter, r *http.Request) {
 	var expense entity.ExpenseCreate
 	if err := httpserver.JsonDecode(w, r, &expense, 0); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
@@ -115,6 +118,7 @@ func (e *ExpenseHandler) UpdateExpense(w http.ResponseWriter, r *http.Request) {
 
 	var expense entity.ExpenseUpdate
 	if err := httpserver.JsonDecode(w, r, &expense, 0); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
@@ -146,4 +150,5 @@ func (e *ExpenseHandler) DeleteExpense(w http.ResponseWriter, r *http.Request) {
 		errs.WriteError(w, 0, http.StatusInternalServerError, fmt.Sprintf("http error: %v", err))
 		return
 	}
+	fmt.Fprintln(w, "OK")
 }

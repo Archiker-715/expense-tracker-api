@@ -2,18 +2,18 @@ package entity
 
 import "github.com/google/uuid"
 
-type User struct {
+type Users struct {
 	UserId   uuid.UUID `gorm:"unique"`
 	Login    string    `gorm:"unique"`
-	Password [32]byte
+	Password []byte
 }
 
 type UserAuthRegistration struct {
-	Login    string
-	Password string
+	Login    string `json:"login"`
+	Password string `json:"password"`
 }
 
 type DBUser struct {
 	Login    string
-	Password [32]byte
+	Password []byte
 }

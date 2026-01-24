@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/Archiker-715/expense-tracker-api/internal/entity"
 	"github.com/Archiker-715/expense-tracker-api/internal/repository/pg"
@@ -22,7 +21,6 @@ func NewAuthService(repo *pg.AuthRepository) *AuthService {
 
 var (
 	secretKey = []byte(os.Getenv("JWT_KEY"))
-	tokenTime = time.Now().Add(time.Hour * 1).Unix()
 )
 
 func (a *AuthService) Authorization(user entity.UserAuthRegistration) (entity.AuthResponse, error) {
@@ -33,19 +31,14 @@ func (a *AuthService) Authorization(user entity.UserAuthRegistration) (entity.Au
 	userId, err := a.repo.GetUserByLogPass(DBUser)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return entity.AuthResponse{}, errors.New("User not found. Try again")
+			return entity.AuthResponse{}, errors.New("User does not exist or password is incorrect. Try again")
 		}
 		return entity.AuthResponse{}, fmt.Errorf("get user: %w", err)
 	}
 
-	token, err := a.generateToken(userId)
+	out, err := a.generateToken(userId)
 	if err != nil {
 		return entity.AuthResponse{}, fmt.Errorf("get token: %w", err)
-	}
-
-	out := entity.AuthResponse{
-		Token:     token,
-		ExpiresIn: int(tokenTime),
 	}
 
 	return out, nil
@@ -56,7 +49,7 @@ func (a *AuthService) Registration(user entity.UserAuthRegistration) error {
 	if err != nil {
 		return fmt.Errorf("create UUID: %w", err)
 	}
-	newUser := entity.User{
+	newUser := entity.Users{
 		UserId:   newUUID,
 		Login:    user.Login,
 		Password: Encode(user.Password),
@@ -67,7 +60,7 @@ func (a *AuthService) Registration(user entity.UserAuthRegistration) error {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return fmt.Errorf("User %q already exists", user.Login)
 		}
-		return err
+		return fmt.Errorf("DB error: %w", err)
 	}
 
 	return nil

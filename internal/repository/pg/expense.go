@@ -17,7 +17,7 @@ func NewExpenseRepository(db *gorm.DB) *ExpenseRepository {
 }
 
 func (e *ExpenseRepository) GetExpenses(userId uuid.UUID) (expenses []entity.Expense, err error) {
-	if err = e.DB.Where("InsertedBy = ?", userId).Find(&expenses).Error; err != nil {
+	if err = e.DB.Where("inserted_by = ?", userId).Find(&expenses).Error; err != nil {
 		return
 	}
 	return
@@ -25,11 +25,11 @@ func (e *ExpenseRepository) GetExpenses(userId uuid.UUID) (expenses []entity.Exp
 
 func (e *ExpenseRepository) GetExpensesByDateInterval(userId uuid.UUID, expenseId uint, startDate, endDate time.Time) (expenses []entity.Expense, err error) {
 	if expenseId != 0 {
-		if err = e.DB.Where("InsertedBy = ?", userId).Where("Inserted >= ? AND Inserted <= ?", startDate, endDate).Where("ID = ?", expenseId).Find(&expenses).Error; err != nil {
+		if err = e.DB.Where("inserted_by = ?", userId).Where("inserted >= ? AND inserted <= ?", startDate, endDate).Where("ID = ?", expenseId).Find(&expenses).Error; err != nil {
 			return
 		}
 	} else {
-		if err = e.DB.Where("InsertedBy = ?", userId).Where("Inserted >= ? AND Inserted <= ?", startDate, endDate).Find(&expenses).Error; err != nil {
+		if err = e.DB.Where("inserted_by = ?", userId).Where("inserted >= ? AND inserted <= ?", startDate, endDate).Find(&expenses).Error; err != nil {
 			return
 		}
 	}
@@ -38,19 +38,19 @@ func (e *ExpenseRepository) GetExpensesByDateInterval(userId uuid.UUID, expenseI
 
 func (e *ExpenseRepository) GetExpensesByPastDate(userId uuid.UUID, expenseId uint, pastDate time.Time) (expenses []entity.Expense, err error) {
 	if expenseId != 0 {
-		if err = e.DB.Where("InsertedBy = ?", userId).Where("Inserted >= ?", pastDate).Where("ID = ?", expenseId).Find(&expenses).Error; err != nil {
+		if err = e.DB.Where("inserted_by = ?", userId).Where("inserted >= ? AND inserted <= ?", pastDate, time.Now()).Where("ID = ?", expenseId).Find(&expenses).Error; err != nil {
 			return
 		}
 	} else {
-		if err = e.DB.Where("InsertedBy = ?", userId).Where("Inserted >= ?", pastDate).Find(&expenses).Error; err != nil {
+		if err = e.DB.Where("inserted_by = ?", userId).Where("inserted >= ? AND inserted <= ?", pastDate, time.Now()).Find(&expenses).Error; err != nil {
 			return
 		}
 	}
 	return
 }
 
-func (e *ExpenseRepository) GetExpenseById(userId uuid.UUID, id uint) (expense entity.Expense, err error) {
-	if err = e.DB.Where("InsertedBy = ?", userId).Find(&expense).Error; err != nil {
+func (e *ExpenseRepository) GetExpenseById(userId uuid.UUID, expenseId uint) (expense entity.Expense, err error) {
+	if err = e.DB.Where("inserted_by = ?", userId).Where("ID = ?", expenseId).Find(&expense).Error; err != nil {
 		return
 	}
 	return
@@ -64,14 +64,14 @@ func (e *ExpenseRepository) CreateExpense(expense *entity.Expense) (entity.ID, e
 }
 
 func (e *ExpenseRepository) UpdateExpense(userId uuid.UUID, expense *entity.Expense) error {
-	if err := e.DB.Where("InsertedBy = ?", userId).Updates(expense).Error; err != nil {
+	if err := e.DB.Where("inserted_by = ?", userId).Updates(expense).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
 func (e *ExpenseRepository) DeleteExpense(userId uuid.UUID, id uint) error {
-	if err := e.DB.Where("InsertedBy = ?", userId).Delete(entity.Expense{ID: id}).Error; err != nil {
+	if err := e.DB.Where("inserted_by = ?", userId).Delete(entity.Expense{ID: id}).Error; err != nil {
 		return err
 	}
 	return nil
